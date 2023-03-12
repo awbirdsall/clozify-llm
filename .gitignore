@@ -1,0 +1,5 @@
+*.un~
+*.pyc
+.python-version
+*.swp
+tmp/
