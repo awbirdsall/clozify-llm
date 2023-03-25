@@ -45,6 +45,13 @@ $ cat clozes.csv
 Die Firma hat sich auf die Herstellung regionaler Produkte spezialisiert.,The company specializes in the production of regional products.,regional
 ```
 
+#### Data prep
+
+Helper functions are in `src/clozify_llm/extract/` that help extract clozes and vocabulary lists. Running these require installing the optional "prep" group of dependencies into the poetry environment.
+
+- `extract_cloze.py`: Extract existing human-generated text, translation, and cloze to tabular form.
+- `extract_wortschatz.py`: Extract existing vocabulary word and definition to tabular form.
+
 ## Limitations
 
 This is relying on machine translation so all limitations there apply. The output might have subtle issues with grammar, idiomatic usage, etc. The assumption is the output will receive manual human review for these issues before being added to a flashcard set.

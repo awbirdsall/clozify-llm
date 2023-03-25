@@ -3,3 +3,6 @@
 .python-version
 *.swp
 tmp/
+data/**/*.html
+data/**/*.csv
+data/**/*.json
