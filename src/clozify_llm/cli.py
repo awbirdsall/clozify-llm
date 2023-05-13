@@ -1,7 +1,13 @@
 import json
+import os
+from getpass import getpass
+from pathlib import Path
 
 import click
+import openai
+import pandas as pd
 
+from clozify_llm.embed import add_emb
 from clozify_llm.extract.extract_cloze import extract_cloze
 from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
 
@@ -59,9 +65,18 @@ def parse(json_file, output):
 
 @cli.command()
 @click.argument("csv_files", nargs=-1, type=click.Path(exists=True))
-@click.option("--output", default="output.csv", help="Output CSV file.")
+@click.option("--output", default="output", help="Output dir.")
 def embed(csv_files, output):
+    if os.getenv("OPENAI_API_KEY") is None:
+        openai.api_key = getpass()
+    Path(output).mkdir(exist_ok=True, parents=True)
     for csv_file in csv_files:
+        csv_path = Path(csv_file)
+        df = pd.read_csv(csv_path)
+        df_emb = add_emb(df)
+        output_csv = Path(output) / f"{csv_path.stem}-embeds.csv"
+        df_emb.to_csv(output_csv)
+        print(f"wrote {len(df_emb)} to {output_csv}")
         # Add your logic to embed the data and write to CSV
         pass
 
