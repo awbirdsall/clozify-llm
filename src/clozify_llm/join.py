@@ -127,7 +127,7 @@ class Joiner:
             to_correct, self.df_vocab, left_on="correct_vocab_idx", right_index=True, how="left"
         ).drop(columns=["issue"])
         with_corrections = pd.merge(
-            candidate_join.drop(["cloze_embedding", "vocab_embedding"], axis="columns"),
+            candidate_join.drop([self.cloze_emb_col, self.word_emb_col], axis="columns"),
             correction,
             left_on="cloze_idx",
             right_on="cloze_idx",
@@ -145,7 +145,7 @@ class Joiner:
 
         if not output_intermediate_cols:
             with_corrections = with_corrections.drop(
-                columns=["correct_vocab_idx", "word_corrected", "def_corrected", "vocab_embedding"]
+                columns=["correct_vocab_idx", "word_corrected", "def_corrected", self.word_emb_col]
             )
 
         return with_corrections

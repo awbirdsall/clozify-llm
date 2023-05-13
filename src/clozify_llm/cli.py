@@ -78,8 +78,6 @@ def embed(csv_files, output):
         output_csv = Path(output) / f"{csv_path.stem}-embeds.csv"
         df_emb.to_csv(output_csv)
         print(f"wrote {len(df_emb)} to {output_csv}")
-        # Add your logic to embed the data and write to CSV
-        pass
 
 
 @cli.command()
@@ -96,12 +94,18 @@ def match(cloze_csv, vocab_csv, output):
 
 
 @cli.command()
-@click.argument("csv_file1", type=click.Path(exists=True))
-@click.argument("csv_file2", type=click.Path(exists=True))
+@click.argument("candidate_join", type=click.Path(exists=True))
+@click.argument("manual_review", type=click.Path(exists=True))
+@click.argument("vocab_csv", type=click.Path(exists=True))
 @click.option("--output", default="output.csv", help="Output CSV file.")
-def fix(csv_file1, csv_file2, output):
-    # Add your logic to fix the input CSV files and write to CSV
-    pass
+def fix(candidate_join, manual_review, vocab_csv, output):
+    df_candidate = pd.read_csv(candidate_join)
+    df_manual = pd.read_csv(manual_review)
+    df_vocab = pd.read_csv(vocab_csv)
+    joiner = Joiner(df_candidate, df_vocab)
+    fixed = joiner.clean_join_from_review(df_candidate, df_manual)
+    fixed.to_csv(output)
+    print(f"wrote corrected join len {len(fixed)} to {output}.")
 
 
 @cli.command()
