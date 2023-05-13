@@ -2,9 +2,11 @@ import json
 
 import click
 
+from clozify_llm.extract.extract_cloze import extract_cloze
+from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
+
 # from clozify_llm.utils import make_chat_params
 # from clozify_llm.join import join_emb_sim, clean_join
-from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
 
 # import openai
 
@@ -50,8 +52,9 @@ def fetch(url, output, staging):
 def parse(json_file, output):
     with open(json_file, "r") as f:
         data = json.load(f)
-    # Add your logic to parse the JSON data and write to CSV
-    pass
+    clozes = extract_cloze(data)
+    clozes.to_csv(output)
+    print(f"wrote {len(clozes)} to {output}")
 
 
 @cli.command()
