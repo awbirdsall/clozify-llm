@@ -10,6 +10,7 @@ import pandas as pd
 from clozify_llm.embed import add_emb
 from clozify_llm.extract.extract_cloze import extract_cloze
 from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
+from clozify_llm.join import Joiner
 
 # from clozify_llm.utils import make_chat_params
 # from clozify_llm.join import join_emb_sim, clean_join
@@ -82,12 +83,16 @@ def embed(csv_files, output):
 
 
 @cli.command()
-@click.argument("csv_file1", type=click.Path(exists=True))
-@click.argument("csv_file2", type=click.Path(exists=True))
+@click.argument("cloze_csv", type=click.Path(exists=True))
+@click.argument("vocab_csv", type=click.Path(exists=True))
 @click.option("--output", default="output.csv", help="Output CSV file.")
-def match(csv_file1, csv_file2, output):
-    # Add your logic to match the input CSV files and write to CSV
-    pass
+def match(cloze_csv, vocab_csv, output):
+    df_cloze = pd.read_csv(cloze_csv)
+    df_vocab = pd.read_csv(vocab_csv)
+    joiner = Joiner(df_cloze, df_vocab)
+    joined = joiner.join_emb_sim()
+    joined.to_csv(output)
+    print(f"wrote candidate join len {len(joined)} to {output}")
 
 
 @cli.command()
