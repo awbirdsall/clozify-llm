@@ -9,6 +9,18 @@ import requests
 from bs4 import BeautifulSoup
 
 
+def get_all_vocab_from_course_request(course_url: str, local_dir: str) -> pd.DataFrame:
+    """Given URL for course page, collect all vocab
+
+    Writes intermediate files to local_dir
+    """
+    response = requests.get(course_url)
+    course_html = response.content.decode("utf-8")
+    print(f"got course_html {course_html[:100]}")
+    df = extract_script(course_html, Path(local_dir))
+    return df
+
+
 def extract_script(course_html: str, local_dir: Path) -> pd.DataFrame:
     """Given course page html, collect vocab list from all linked lessons
 

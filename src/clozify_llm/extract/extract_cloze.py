@@ -1,6 +1,4 @@
 """extract-cloze.py Utility for extracting tabular cloze data from raw json
-
-Assumes raw json matches list of console log objects from clozemaster
 """
 import pandas as pd
 
