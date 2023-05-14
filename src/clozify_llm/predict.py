@@ -17,12 +17,16 @@ class Completer:
         Must format prompt in same way that completion model was fine-tuned.
         """
         prompt = format_prompt(word, defn)
+        completion_kwargs = {
+            "max_tokens": 200,
+            "temperature": 0.2,
+        }
+        completion_kwargs.update(**kwargs)
         completion = openai.Completion.create(
             model=self.model_id,
             prompt=prompt,
             stop=END_STR,
-            max_tokens=200,
-            **kwargs,
+            **completion_kwargs,
         )
         return completion
 
