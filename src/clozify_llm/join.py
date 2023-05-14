@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-from clozify_llm.constants import CLOZE_COL, WORD_COL
+from clozify_llm.constants import CLOZE_COL, DEFN_COL, WORD_COL
 
 
 class Joiner:
@@ -22,6 +22,7 @@ class Joiner:
         df_vocab: pd.DataFrame,
         cloze_col: str = CLOZE_COL,
         word_col: str = WORD_COL,
+        defn_col: str = DEFN_COL,
         cloze_emb_col: Optional[str] = None,
         word_emb_col: Optional[str] = None,
     ):
@@ -29,6 +30,7 @@ class Joiner:
         self.df_vocab = df_vocab
         self.cloze_col = cloze_col
         self.word_col = word_col
+        self.defn_col = defn_col
         if cloze_emb_col is None:
             cloze_emb_col = f"{cloze_col}_embedding"
         if word_emb_col is None:
@@ -134,22 +136,26 @@ class Joiner:
             how="left",
             suffixes=("", "_corrected"),
         )
+        corrected_word_col = f"{self.word_col}_corrected"
+        corrected_defn_col = f"{self.defn_col}_corrected"
         # Make replacements
-        rows_to_correct = with_corrections["word_corrected"].notnull()
+        rows_to_correct = with_corrections[corrected_word_col].notnull()
         with_corrections.loc[rows_to_correct, "vocab_idx"] = with_corrections.loc[rows_to_correct, "translation"]
-        with_corrections.loc[rows_to_correct, "word"] = with_corrections.loc[rows_to_correct, "word_corrected"]
-        with_corrections.loc[rows_to_correct, "def"] = with_corrections.loc[rows_to_correct, "def_corrected"]
+        with_corrections.loc[rows_to_correct, self.word_col] = with_corrections.loc[rows_to_correct, corrected_word_col]
+        with_corrections.loc[rows_to_correct, self.defn_col] = with_corrections.loc[rows_to_correct, corrected_defn_col]
         # Drop rows not in vocab
         to_drop = has_issue.loc[has_issue["correct_vocab_idx"] == "None", "cloze_idx"].values
         with_corrections = with_corrections[~with_corrections.cloze_idx.isin(to_drop)]
 
         if not output_intermediate_cols:
             with_corrections = with_corrections.drop(
-                columns=["correct_vocab_idx", "word_corrected", "def_corrected", self.word_emb_col]
+                columns=["correct_vocab_idx", corrected_word_col, corrected_defn_col, self.word_emb_col]
             )
 
         return with_corrections
 
-    def view_multi_def(self, vocab: pd.DataFrame, word_col: str = "word", def_col: str = "def") -> pd.DataFrame:
+    def view_multi_defn(self, vocab: pd.DataFrame) -> pd.DataFrame:
         """Helper function to view subset of vocab when single word can have multiple definitions"""
-        return vocab[vocab.duplicated(subset=["word"], keep=False)].sort_values("word")[["word", "def"]]
+        return vocab[vocab.duplicated(subset=[self.word_col], keep=False)].sort_values(self.word_col)[
+            [self.word_col, self.defn_col]
+        ]

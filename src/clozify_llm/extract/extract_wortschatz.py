@@ -8,6 +8,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
+from clozify_llm.constants import DEFN_COL, WORD_COL
+
 
 def get_all_vocab_from_course_request(course_url: str, local_dir: str) -> pd.DataFrame:
     """Given URL for course page, collect all vocab
@@ -29,7 +31,7 @@ def extract_script(course_html: str, local_dir: Path) -> pd.DataFrame:
 
     Returns
     -------
-    DataFrame with columns "word" and "def"
+    DataFrame with columns WORD_COL and DEFN_COL
     """
     lessons = lessons_from_course(course_html)
     words = []
@@ -93,5 +95,5 @@ def words_from_wortschatz_html(html_str: str) -> list[dict[str, str]]:
         if word and def_:
             word_text = normalize("NFKD", word.text)
             def_text = normalize("NFKD", def_.text)
-            words.append({"word": word_text, "def": def_text})
+            words.append({WORD_COL: word_text, DEFN_COL: def_text})
     return words

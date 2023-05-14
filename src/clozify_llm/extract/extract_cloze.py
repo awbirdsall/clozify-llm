@@ -2,6 +2,8 @@
 """
 import pandas as pd
 
+from clozify_llm.constants import CLOZE_COL
+
 
 def extract_cloze(raw_input: list[dict]) -> pd.DataFrame:
     """Extract contents from list of clozemaster collection pages
@@ -19,5 +21,5 @@ def extract_cloze(raw_input: list[dict]) -> pd.DataFrame:
     )
     df["collection"] = df["collection"].apply(lambda x: x["name"])
     cloze_finder = r"\{\{(?P<cloze>\w*)\}\}"
-    df["cloze"] = df["text"].str.extract(cloze_finder)
+    df[CLOZE_COL] = df["text"].str.extract(cloze_finder)
     return df

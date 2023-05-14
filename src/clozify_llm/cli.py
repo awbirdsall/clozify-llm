@@ -10,6 +10,7 @@ import pandas as pd
 from clozify_llm.embed import add_emb
 from clozify_llm.extract.extract_cloze import extract_cloze
 from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
+from clozify_llm.finetune import FineTuner
 from clozify_llm.join import Joiner
 
 # from clozify_llm.utils import make_chat_params
@@ -110,10 +111,14 @@ def fix(candidate_join, manual_review, vocab_csv, output):
 
 @cli.command()
 @click.argument("csv_file", type=click.Path(exists=True))
-def finetune(csv_file):
-    # Add your logic to finetune the model with the input CSV file
-    # and display the identifier of the fine-tuned model
-    pass
+@click.argument("training_data_output")
+def finetune(csv_file, training_data_output):
+    if os.getenv("OPENAI_API_KEY") is None:
+        openai.api_key = getpass()
+    df = pd.read_csv(csv_file)
+    fine_tuner = FineTuner(df, training_data_output)
+    ft_response = fine_tuner.start_finetuning()
+    print(f"FineTune job created with response {ft_response}")
 
 
 @cli.command()

@@ -20,3 +20,5 @@ DEFAULT_CHAT_MAX_TOKENS = 256
 DEFAULT_EMB_ENG = "text-embedding-ada-002"
 CLOZE_COL = "cloze"
 WORD_COL = "word"
+DEFN_COL = "defn"
+DEFAULT_COMPLETION_MODEL = "curie"
