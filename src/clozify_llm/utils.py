@@ -57,3 +57,11 @@ def get_embs(xs: list[str]) -> list[list[float]]:
             print(f"ERROR - could not retrieve embedding for {x}")
     print(f"INFO - Got {len(embs)} embeddings, total token usage {tokens}")
     return embs
+
+
+def format_prompt(word: str, definition: str) -> str:
+    return f"{word.strip()}\n{definition.strip()}\n\n###\n\n"
+
+
+def format_completion(text: str, translation: str, cloze: str) -> str:
+    return f" {text},{translation},{cloze} END"

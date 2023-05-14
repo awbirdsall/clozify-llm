@@ -11,6 +11,7 @@ from clozify_llm.constants import (
     DEFN_COL,
     WORD_COL,
 )
+from clozify_llm.utils import format_completion, format_prompt
 
 
 class FineTuner:
@@ -19,26 +20,27 @@ class FineTuner:
         self.training_data_path = training_data_path
         self.model = model
 
-    @staticmethod
-    def format_prompt(word: str, definition: str) -> str:
-        return f"{word.strip()}\n{definition.strip()}\n\n###\n\n"
-
-    @staticmethod
-    def format_completion(text: str, translation: str, cloze: str) -> str:
-        return f" {text},{translation},{cloze} END"
-
     def create_dataset(self) -> list[dict]:
         train_rows = []
-        print(f"columns {self.df.columns}")
         to_iter = self.df[[WORD_COL, DEFN_COL, "text", "translation", CLOZE_COL]]
         for row in to_iter.itertuples():
-            print(f"formatting row {row}")
-            prompt = self.format_prompt(getattr(row, WORD_COL), getattr(row, DEFN_COL))
-            completion = self.format_completion(row.text, row.translation, getattr(row, CLOZE_COL))
+            prompt = format_prompt(getattr(row, WORD_COL), getattr(row, DEFN_COL))
+            completion = format_completion(row.text, row.translation, getattr(row, CLOZE_COL))
             train_rows.append({"prompt": prompt, "completion": completion})
         return train_rows
 
     def start_finetuning(self):
+        """Start finetuning and return response from openai.FineTune.create
+
+        Note the fine tune will only be submitted when this call completes. To follow status can use
+        openai CLI commands such as
+
+        ```bash
+        $ openai api fine_tunes.follow -i <FINE_TUNE_ID>
+        ```
+
+        where <FINE_TUNE_ID> is the "id" field in the fine_tune.create response.
+        """
         dataset = self.create_dataset()
         with open(self.training_data_path, "w", encoding="utf-8") as f:
             for entry in dataset:

@@ -7,11 +7,13 @@ import click
 import openai
 import pandas as pd
 
+from clozify_llm.constants import DEFN_COL, WORD_COL
 from clozify_llm.embed import add_emb
 from clozify_llm.extract.extract_cloze import extract_cloze
 from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
 from clozify_llm.finetune import FineTuner
 from clozify_llm.join import Joiner
+from clozify_llm.predict import Completer
 
 # from clozify_llm.utils import make_chat_params
 # from clozify_llm.join import join_emb_sim, clean_join
@@ -122,16 +124,23 @@ def finetune(csv_file, training_data_output):
 
 
 @cli.command()
-@click.argument("input", type=click.Path(exists=True))
+@click.argument("input_csv", type=click.Path(exists=True))
+@click.argument("model_id")
 @click.option("--output", default="output.csv", help="Output CSV file.")
-def complete(input, output):
-    # Add your logic to complete the input single word or text file
-    # and return the result as a CSV-formatted string
-    pass
-
-
-# cli.add_command(make_cloze)
-# cli.add_command(prep_join)
+def complete(input_csv, model_id, output):
+    if os.getenv("OPENAI_API_KEY") is None:
+        openai.api_key = getpass()
+    completer = Completer(model_id)
+    df_inputs = pd.read_csv(input_csv)
+    cloze_responses = []
+    for row in df_inputs.itertuples():
+        word = getattr(row, WORD_COL)
+        defn = getattr(row, DEFN_COL)
+        completion = completer.get_cloze_text(word, defn)
+        cloze_responses.append(completion)
+    with open(output, "w") as f:
+        f.writelines(cloze_line + "\n" for cloze_line in cloze_responses)
+    print(f"wrote {len(cloze_responses)} to {output}")
 
 
 # def get_args() -> argparse.Namespace:
