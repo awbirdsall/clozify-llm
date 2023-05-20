@@ -137,29 +137,35 @@ def fix(candidate_join, manual_review, vocab_csv, output):
 @click.argument("csv_file", type=click.Path(exists=True))
 @click.argument("training_data_output")
 def finetune(csv_file, training_data_output):
-    """Start completion model fine-tuning from training data"""
+    """
+    Start completion model fine-tuning from training data
+
+    Start model fine-tuning using data in CSV_FILE written to TRAINING_DATA_OUTPUT in the format
+    that is uploaded for fine-tuning. Details of the FineTune job is printed.
+    """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     df = pd.read_csv(csv_file)
     fine_tuner = FineTuner(df, training_data_output)
     ft_response = fine_tuner.start_finetuning()
-    print(f"FineTune job created with response {ft_response}")
+    click.echo("FineTune job created")
+    click.echo(ft_response)
 
 
 @cli.command()
-@click.argument("input_csv", type=click.Path(exists=True))
-@click.argument("model_id")
-@click.option("--output", type=click.Path(allow_dash=True), default="-", help="Output CSV file.")
-def complete(input_csv, model_id, output):
+@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="Input CSV file")
+@click.option("-m", "--model_id", required=True, help="Fine tuned completion model")
+@click.option("-o", "--output", type=click.Path(allow_dash=True), default="-", help="Output CSV file.")
+def complete(input, model_id, output):
     """Generate clozes using a completion model
 
-    Provide word and definition in each row of INPUT_CSV to fine-tuned MODEL_ID to generate 1 csv-formatted cloze row
+    Provide word and definition in each row of INPUT to fine-tuned MODEL_ID to generate 1 csv-formatted cloze row
     for OUTPUT.
     """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     completer = Completer(model_id)
-    df_inputs = pd.read_csv(input_csv)
+    df_inputs = pd.read_csv(input)
     cloze_responses = []
     for row in df_inputs.itertuples():
         word = getattr(row, WORD_COL)

@@ -34,4 +34,5 @@ class Completer:
         """Get single cloze completion text from OpenAIObject"""
         completion = self.get_completion_response(word, defn)
         cloze_response = completion["choices"][0]["text"]
+        print(f"response for {word} received, total usage {completion.get('usage').get('total_tokens')}")
         return cloze_response
