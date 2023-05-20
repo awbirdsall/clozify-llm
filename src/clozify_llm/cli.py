@@ -19,6 +19,7 @@ from clozify_llm.utils import make_chat_params
 
 @click.group()
 def cli():
+    """Use LLMs to generate cloze sentences."""
     pass
 
 
@@ -44,21 +45,24 @@ def chat(input, output):
     click.echo(f"wrote {len(responses)} responses to {output}")
 
 
-@cli.command()
+@cli.group()
+def prep():
+    """Prepare training data for model fine-tuning."""
+    pass
+
+
+@prep.command()
 @click.argument("url")
 @click.option("--output", default="wortschatz.csv", help="Output location.")
 @click.option("--staging", default="tmp", help="Directory to save intermediate html.")
 def fetch(url, output, staging):
-    """Get vocabulary from a course
-
-    Used as part of the training data generation process
-    """
+    """Get vocabulary from a course"""
     words = get_all_vocab_from_course_request(url, staging)
     words.to_csv(output)
     print(f"wrote {len(words)} to {output}")
 
 
-@cli.command()
+@prep.command()
 @click.argument("json_file")
 @click.option("--output", default="output.csv", help="Output CSV file.")
 def parse(json_file, output):
@@ -66,14 +70,14 @@ def parse(json_file, output):
 
     Used as part of the training data generation process
     """
-    with open(json_file, "r") as f:
+    with click.open_file(json_file, "r") as f:
         data = json.load(f)
     clozes = extract_cloze(data)
     clozes.to_csv(output)
     print(f"wrote {len(clozes)} to {output}")
 
 
-@cli.command()
+@prep.command()
 @click.argument("csv_files", nargs=-1, type=click.Path(exists=True))
 @click.option("--output", default="output", help="Output dir.")
 def embed(csv_files, output):
@@ -93,7 +97,7 @@ def embed(csv_files, output):
         print(f"wrote {len(df_emb)} to {output_csv}")
 
 
-@cli.command()
+@prep.command()
 @click.argument("cloze_csv", type=click.Path(exists=True))
 @click.argument("vocab_csv", type=click.Path(exists=True))
 @click.option("--output", default="output.csv", help="Output CSV file.")
@@ -110,7 +114,7 @@ def match(cloze_csv, vocab_csv, output):
     print(f"wrote candidate join len {len(joined)} to {output}")
 
 
-@cli.command()
+@prep.command()
 @click.argument("candidate_join", type=click.Path(exists=True))
 @click.argument("manual_review", type=click.Path(exists=True))
 @click.argument("vocab_csv", type=click.Path(exists=True))
@@ -145,11 +149,12 @@ def finetune(csv_file, training_data_output):
 @cli.command()
 @click.argument("input_csv", type=click.Path(exists=True))
 @click.argument("model_id")
-@click.option("--output", default="output.csv", help="Output CSV file.")
+@click.option("--output", type=click.Path(allow_dash=True), default="-", help="Output CSV file.")
 def complete(input_csv, model_id, output):
     """Generate clozes using a completion model
 
-    Returns 1 csv-formatted cloze for each line in input_id, using the specified fine-tuned completion model
+    Provide word and definition in each row of INPUT_CSV to fine-tuned MODEL_ID to generate 1 csv-formatted cloze row
+    for OUTPUT.
     """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
@@ -161,23 +166,14 @@ def complete(input_csv, model_id, output):
         defn = getattr(row, DEFN_COL)
         completion = completer.get_cloze_text(word, defn)
         cloze_responses.append(completion)
-    with open(output, "w") as f:
+    with click.open_file(output, "w") as f:
         f.writelines(cloze_line + "\n" for cloze_line in cloze_responses)
-    print(f"wrote {len(cloze_responses)} to {output}")
-
-
-# def get_args() -> argparse.Namespace:
-#     """Get command-line args"""
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-i", "--input", required=True, help="input text file")
-#     parser.add_argument("-o", "--output", required=True, help="output csv file")
-#     args = parser.parse_args()
-#     return args
+    click.echo(f"wrote {len(cloze_responses)} to {output}")
 
 
 def get_inputs(input_loc: str) -> list[str]:
     """Extract list of input strings from specified text file location"""
-    with open(input_loc, "r") as f:
+    with click.open_file(input_loc, "r") as f:
         inputs = f.read().splitlines()
     return inputs
 
