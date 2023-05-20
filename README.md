@@ -13,8 +13,10 @@ I can trawl the web to find examples. (Thank you, search bars on German public r
 The idea here is prompting a LLM for each word in a list and requesting a response that's already in the CSV format Clozemaster accepts for batch uploads.
 
 I've experimented with two approaches:
-- A zero-shot approach that uses a `STARTING_MESSAGE` to prompt ChatGPT with an example prompt and response
+- A one-shot approach that uses a `STARTING_MESSAGE` to prompt ChatGPT with an example prompt and response
 - A fine-tuning approach that uses a completion model (e.g. OpenAI "curie") fine-tuned on a number of existing example cloze creations. This requires an appropriate training data set.
+
+![Flowchart](docs/process-flow.png)
 
 ## How?
 
