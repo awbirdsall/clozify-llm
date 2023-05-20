@@ -14,11 +14,7 @@ from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_req
 from clozify_llm.finetune import FineTuner
 from clozify_llm.join import Joiner
 from clozify_llm.predict import Completer
-
-# from clozify_llm.utils import make_chat_params
-# from clozify_llm.join import join_emb_sim, clean_join
-
-# import openai
+from clozify_llm.utils import make_chat_params
 
 
 @click.group()
@@ -26,24 +22,26 @@ def cli():
     pass
 
 
-# @click.command()
-# def make_cloze():
-#     args = get_args()
-#     inputs = get_inputs(args.input)
-#     responses = []
-#     for input_word in inputs:
-#         chat_params = make_chat_params(input_word)
-#         response = openai.ChatCompletion.create(**chat_params)
-#         click.echo(f"response for {input_word} received, usage {response.get('usage')}")
-#         responses.append(response)
-#     write_output(responses, args.output)
-#     click.echo(f"wrote {len(responses)} responses to {args.output}")
+@cli.command()
+@click.option("-i", "--input", type=click.Path(), required=True, help="Input location")
+@click.option("-o", "--output", type=click.Path(allow_dash=True), default="-", help="Output location")
+def chat(input, output):
+    """Generate clozes using a chat model
 
+    Read each line in INPUT, generate a cloze, and write to OUTPUT.
+    """
+    if os.getenv("OPENAI_API_KEY") is None:
+        openai.api_key = getpass()
+    inputs = get_inputs(input)
+    responses = []
+    for input_word in inputs:
+        chat_params = make_chat_params(input_word)
+        response = openai.ChatCompletion.create(**chat_params)
+        click.echo(f"response for {input_word} received, total usage {response.get('usage').get('total_tokens')}")
+        responses.append(response)
 
-# @click.command()
-# def prep_join():
-#     joiner = Joiner()
-#     join_cloze_vocab()
+    write_output(responses, output)
+    click.echo(f"wrote {len(responses)} responses to {output}")
 
 
 @cli.command()
@@ -51,6 +49,10 @@ def cli():
 @click.option("--output", default="wortschatz.csv", help="Output location.")
 @click.option("--staging", default="tmp", help="Directory to save intermediate html.")
 def fetch(url, output, staging):
+    """Get vocabulary from a course
+
+    Used as part of the training data generation process
+    """
     words = get_all_vocab_from_course_request(url, staging)
     words.to_csv(output)
     print(f"wrote {len(words)} to {output}")
@@ -60,6 +62,10 @@ def fetch(url, output, staging):
 @click.argument("json_file")
 @click.option("--output", default="output.csv", help="Output CSV file.")
 def parse(json_file, output):
+    """Extract clozes from scraped json data
+
+    Used as part of the training data generation process
+    """
     with open(json_file, "r") as f:
         data = json.load(f)
     clozes = extract_cloze(data)
@@ -71,6 +77,10 @@ def parse(json_file, output):
 @click.argument("csv_files", nargs=-1, type=click.Path(exists=True))
 @click.option("--output", default="output", help="Output dir.")
 def embed(csv_files, output):
+    """Get embeddings for the word or cloze in the input
+
+    Used as part of the training data generation process
+    """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     Path(output).mkdir(exist_ok=True, parents=True)
@@ -88,6 +98,10 @@ def embed(csv_files, output):
 @click.argument("vocab_csv", type=click.Path(exists=True))
 @click.option("--output", default="output.csv", help="Output CSV file.")
 def match(cloze_csv, vocab_csv, output):
+    """Join cloze and vocab data based on embedding similarities
+
+    Used as part of the training data generation process
+    """
     df_cloze = pd.read_csv(cloze_csv)
     df_vocab = pd.read_csv(vocab_csv)
     joiner = Joiner(df_cloze, df_vocab)
@@ -102,6 +116,10 @@ def match(cloze_csv, vocab_csv, output):
 @click.argument("vocab_csv", type=click.Path(exists=True))
 @click.option("--output", default="output.csv", help="Output CSV file.")
 def fix(candidate_join, manual_review, vocab_csv, output):
+    """Update candidate training data based on manual review
+
+    Used as part of the training data generation process
+    """
     df_candidate = pd.read_csv(candidate_join)
     df_manual = pd.read_csv(manual_review)
     df_vocab = pd.read_csv(vocab_csv)
@@ -115,6 +133,7 @@ def fix(candidate_join, manual_review, vocab_csv, output):
 @click.argument("csv_file", type=click.Path(exists=True))
 @click.argument("training_data_output")
 def finetune(csv_file, training_data_output):
+    """Start completion model fine-tuning from training data"""
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     df = pd.read_csv(csv_file)
@@ -128,6 +147,10 @@ def finetune(csv_file, training_data_output):
 @click.argument("model_id")
 @click.option("--output", default="output.csv", help="Output CSV file.")
 def complete(input_csv, model_id, output):
+    """Generate clozes using a completion model
+
+    Returns 1 csv-formatted cloze for each line in input_id, using the specified fine-tuned completion model
+    """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     completer = Completer(model_id)
@@ -152,26 +175,26 @@ def complete(input_csv, model_id, output):
 #     return args
 
 
-# def get_inputs(input_loc: str) -> list[str]:
-#     """Extract list of input strings from specified text file location"""
-#     with open(input_loc, "r") as f:
-#         inputs = f.read().splitlines()
-#     return inputs
+def get_inputs(input_loc: str) -> list[str]:
+    """Extract list of input strings from specified text file location"""
+    with open(input_loc, "r") as f:
+        inputs = f.read().splitlines()
+    return inputs
 
 
-# def write_output(responses: list[dict], output_loc: str):
-#     """Given a list of responses from OpenAI ChatCompletion API, write output to file.
+def write_output(responses: list[dict], output_loc: str):
+    """Given a list of responses from OpenAI ChatCompletion API, write output to file.
 
-#     This is expected to be CSV, but depends on how cooperative ChatGPT is being.
-#     """
-#     output_str = ""
-#     for response in responses:
-#         response_msg = response["choices"][0]["message"]
-#         response_content = response_msg["content"]
-#         output_str += response_content + "\n"
+    This is expected to be CSV, but depends on how cooperative ChatGPT is being.
+    """
+    output_str = ""
+    for response in responses:
+        response_msg = response["choices"][0]["message"]
+        response_content = response_msg["content"]
+        output_str += response_content + "\n"
 
-#     with open(output_loc, "w") as f:
-#         f.write(output_str)
+    with click.open_file(output_loc, "w") as f:
+        f.write(output_str)
 
 
 if __name__ == "__main__":
