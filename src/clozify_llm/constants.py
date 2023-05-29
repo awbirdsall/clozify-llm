@@ -23,3 +23,5 @@ WORD_COL = "word"
 DEFN_COL = "defn"
 DEFAULT_COMPLETION_MODEL = "curie"
 END_STR = " END"
+PROMPT_SEPARATOR = "\n\n###\n\n"
+QUOTECHAR = '"'
