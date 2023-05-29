@@ -1,6 +1,7 @@
 """finetune.py Functionality to finetune completion LLM with training data
 """
 import json
+from pathlib import Path
 
 import openai
 import pandas as pd
@@ -29,7 +30,19 @@ class FineTuner:
             train_rows.append({"prompt": prompt, "completion": completion})
         return train_rows
 
-    def start_finetuning(self):
+    def write_data(self, dataset, overwrite=False):
+        """Write dataset to local training_data_path.
+
+        Do not overwrite unless instructed"""
+        if Path(self.training_data_path).exists() and not overwrite:
+            print(f"{self.training_data_path} exists, skipping write")
+        else:
+            with open(self.training_data_path, "w", encoding="utf-8") as f:
+                for entry in dataset:
+                    json.dump(entry, f, ensure_ascii=False)
+                    f.write("\n")
+
+    def start_finetuning(self, generate_dataset=True):
         """Start finetuning and return response from openai.FineTune.create
 
         Note the fine tune will only be submitted when this call completes. To follow status can use
@@ -41,11 +54,9 @@ class FineTuner:
 
         where <FINE_TUNE_ID> is the "id" field in the fine_tune.create response.
         """
-        dataset = self.create_dataset()
-        with open(self.training_data_path, "w", encoding="utf-8") as f:
-            for entry in dataset:
-                json.dump(entry, f, ensure_ascii=False)
-                f.write("\n")
+        if generate_dataset:
+            dataset = self.create_dataset()
+            self.write_data(dataset, overwrite=True)
 
         with open(self.training_data_path, "r") as f:
             file_response = openai.File.create(file=f, purpose="fine-tune")
