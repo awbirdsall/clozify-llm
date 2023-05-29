@@ -11,7 +11,7 @@ STARTING_MESSAGE = [
     },
     {
         "role": "assistant",
-        "content": "Die einheimische Jägerschaft hält sich zurück.,The local hunters hold back.,einheimische",
+        "content": '"Die einheimische Jägerschaft hält sich zurück.","The local hunters hold back.","einheimische"',
     },
 ]
 DEFAULT_CHAT_MODEL = "gpt-3.5-turbo"

@@ -63,8 +63,8 @@ response for regional received, total usage 104
 response for Waschbär received, total usage 107
 wrote 2 responses to out_clozes.csv
 $ cat clozes.csv
-Die regionale Küche ist sehr vielfältig und lecker.,The regional cuisine is very diverse and delicious.,regional
-Der Waschbär ist ein nachtaktives Tier.,The raccoon is a nocturnal animal.,Waschbär
+"Die regionale Küche ist sehr vielfältig und lecker.","The regional cuisine is very diverse and delicious.","regional"
+"Der Waschbär ist ein nachtaktives Tier.","The raccoon is a nocturnal animal.","Waschbär"
 ```
 
 #### `clozify complete`
