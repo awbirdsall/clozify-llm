@@ -13,8 +13,7 @@ from clozify_llm.extract.extract_cloze import extract_cloze
 from clozify_llm.extract.extract_wortschatz import get_all_vocab_from_course_request
 from clozify_llm.finetune import FineTuner
 from clozify_llm.join import Joiner
-from clozify_llm.predict import Completer
-from clozify_llm.utils import make_chat_params
+from clozify_llm.predict import ChatCompleter, Completer
 
 
 @click.group()
@@ -24,22 +23,28 @@ def cli():
 
 
 @cli.command()
-@click.option("-i", "--input", type=click.Path(), required=True, help="Input location")
+@click.argument("word", required=False)
+@click.option("-f", "--file", type=click.Path(exists=True), required=False, help="Read input from file")
 @click.option("-o", "--output", type=click.Path(allow_dash=True), default="-", help="Output location")
-def chat(input, output):
+def chat(word, file, output):
     """Generate clozes using a chat model
 
-    Read each line in INPUT, generate a cloze, and write to OUTPUT.
+    Read WORD or each line in FILE, generate a cloze, and write to OUTPUT.
     """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
-    inputs = get_inputs(input)
+    completer = ChatCompleter()
+    if word:
+        inputs = [word]
+    elif file:
+        with click.open_file(file, "r") as f:
+            inputs = f.read().splitlines()
+    else:
+        click.echo("No input provided. Please provide either an input string or a file path")
     responses = []
     for input_word in inputs:
-        chat_params = make_chat_params(input_word)
-        response = openai.ChatCompletion.create(**chat_params)
-        click.echo(f"response for {input_word} received, total usage {response.get('usage').get('total_tokens')}")
-        responses.append(response)
+        completion = completer.get_cloze_text(input_word, defn="")
+        responses.append(completion)
 
     write_output(responses, output)
     click.echo(f"wrote {len(responses)} responses to {output}")
@@ -153,50 +158,56 @@ def finetune(csv_file, training_data_output):
 
 
 @cli.command()
-@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="Input CSV file")
+@click.argument("word", required=False)
+@click.argument("defn", required=False)
+@click.option("-f", "--file", type=click.Path(exists=True), required=False, help="Input CSV file")
 @click.option("-m", "--model_id", required=True, help="Fine tuned completion model")
 @click.option("-o", "--output", type=click.Path(allow_dash=True), default="-", help="Output CSV file.")
-def complete(input, model_id, output):
+def complete(word, defn, file, model_id, output):
     """Generate clozes using a completion model
 
-    Provide word and definition in each row of INPUT to fine-tuned MODEL_ID to generate 1 csv-formatted cloze row
-    for OUTPUT.
+    Read WORD and DEFN or each line in FILE, provide to fine-tuned MODEL_ID, and write to OUTPUT.
     """
     if os.getenv("OPENAI_API_KEY") is None:
         openai.api_key = getpass()
     completer = Completer(model_id)
-    df_inputs = pd.read_csv(input)
-    cloze_responses = []
+    if word and defn:
+        df_inputs = pd.DataFrame({WORD_COL: [word], DEFN_COL: [defn]})
+    elif file:
+        df_inputs = pd.read_csv(file)
+    else:
+        click.echo("No input provided. Please provide either an input word and defn or a file path")
+    cloze_texts = []
     for row in df_inputs.itertuples():
         word = getattr(row, WORD_COL)
         defn = getattr(row, DEFN_COL)
         completion = completer.get_cloze_text(word, defn)
-        cloze_responses.append(completion)
-    with click.open_file(output, "w") as f:
-        f.writelines(cloze_line + "\n" for cloze_line in cloze_responses)
-    click.echo(f"wrote {len(cloze_responses)} to {output}")
+        cloze_texts.append(completion)
+    write_output(cloze_texts, output)
+    click.echo(f"wrote {len(cloze_texts)} to {output}")
 
 
-def get_inputs(input_loc: str) -> list[str]:
-    """Extract list of input strings from specified text file location"""
-    with click.open_file(input_loc, "r") as f:
-        inputs = f.read().splitlines()
-    return inputs
-
-
-def write_output(responses: list[dict], output_loc: str):
-    """Given a list of responses from OpenAI ChatCompletion API, write output to file.
+def write_output(cloze_texts: list[str], output_loc: str):
+    """Given a list of texts, write to file at specified location.
 
     This is expected to be CSV, but depends on how cooperative ChatGPT is being.
     """
-    output_str = ""
-    for response in responses:
-        response_msg = response["choices"][0]["message"]
-        response_content = response_msg["content"]
-        output_str += response_content + "\n"
-
     with click.open_file(output_loc, "w") as f:
-        f.write(output_str)
+        f.writelines(cloze_line + "\n" for cloze_line in cloze_texts)
+
+
+def get_help_recursive(command, parent_name=""):
+    """Helper function to generate help strings for all commands"""
+    ctx = click.Context(command)
+    if command.name == "cli":
+        cmd_name = "clozify"
+    else:
+        cmd_name = f"{parent_name} {command.name}"
+    help_string = f"$ {cmd_name} --help\n" + command.get_help(ctx) + "\n"
+    if hasattr(command, "commands"):
+        for subcommand in command.commands.values():
+            help_string += "\n" + get_help_recursive(subcommand, cmd_name)
+    return help_string
 
 
 if __name__ == "__main__":

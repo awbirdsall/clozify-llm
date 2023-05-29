@@ -58,10 +58,10 @@ Commands:
 ```bash
 $ echo "regional" > vocab.txt
 $ echo "Waschbär" >> vocab.txt
-$ clozify chat -i vocab.txt -o out_clozes.csv
+$ clozify chat -f vocab.txt -o out_clozes.csv
 response for regional received, total usage 104
 response for Waschbär received, total usage 107
-wrote 1 responses to out_clozes.csv
+wrote 2 responses to out_clozes.csv
 $ cat clozes.csv
 Die regionale Küche ist sehr vielfältig und lecker.,The regional cuisine is very diverse and delicious.,regional
 Der Waschbär ist ein nachtaktives Tier.,The raccoon is a nocturnal animal.,Waschbär
@@ -77,7 +77,7 @@ word,defn
 "Ausrede, -n (f.)","eine Erklärung, die aber nicht ganz wahr ist und die eine Entschuldigung für etwas sein soll"
 "Bank (f.)","Unternehmen, das Geld- und Kreditgeschäfte betreibt und den Zahlungsverkehr vermittelt"
 "Bank (f.)","Sitzgelegenheit aus Holz, Stein o. Ä., die mehreren Personen nebeneinander Platz bietet"
-$ clozify complete -i my_inputs.csv -m 'curie:ft-personal-2023-01-01-01-01-01' -o my_clozes.csv
+$ clozify complete -f my_inputs.csv -m 'curie:ft-personal-2023-01-01-01-01-01' -o my_clozes.csv
 response for Ausrede, -n (f.) received, total usage 80
 response for Bank (f.) received, total usage 77
 response for Bank (f.) received, total usage 83
