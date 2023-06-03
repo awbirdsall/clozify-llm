@@ -82,9 +82,9 @@ response for Ausrede, -n (f.) received, total usage 80
 response for Bank (f.) received, total usage 77
 response for Bank (f.) received, total usage 83
 $ cat my_clozes.csv
- "Ich muss diese Ausrede nicht erfinden.","I don't have to come up with an excuse.","Ausrede"
- "Sie müssen nur ein Konto bei einer deutschen Bank haben.","You only need a bank account in Germany.","Bank"
- "Ein Bank ist eine Möbelstück, die zur Sitzgelegenheit dient.","A bench is a piece of furniture that serves as a seating device.","Bank"
+"Ich muss diese Ausrede nicht erfinden.","I don't have to come up with an excuse.","Ausrede"
+"Sie müssen nur ein Konto bei einer deutschen Bank haben.","You only need a bank account in Germany.","Bank"
+"Ein Bank ist eine Möbelstück, die zur Sitzgelegenheit dient.","A bench is a piece of furniture that serves as a seating device.","Bank"
 ```
 
 #### `clozify finetune`
