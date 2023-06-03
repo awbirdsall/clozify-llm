@@ -35,13 +35,20 @@ black = "^23.1.0"
 pylint = "^2.17.0"
 pre-commit = "^3.1.1"
 ruff = "^0.0.267"
+pytest-cov = "^4.1.0"
+coverage-badge = "^1.1.0"
 
 [tool.poetry.group.lab.dependencies]
 jupyterlab = "^3.6.3"
 session-info = "^1.0.0"
 
 [tool.pytest.ini_options]
+minversion = "6.0"
 testpaths = ["tests"]
+addops = "--cov"
+
+[tool.coverage.run]
+source = ["clozify_llm"]
 
 [tool.black]
 line-length = 120

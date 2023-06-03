@@ -1,5 +1,7 @@
 # clozify-llm
 
+![Coverage badge](docs/coverage.svg)
+
 A tiny tool to help generate sentences for Clozemaster language learning using large language models (LLM).
 
 Wraps around the OpenAI API.
