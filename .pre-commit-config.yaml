@@ -14,3 +14,15 @@ repos:
   hooks:
     - id: isort
       name: isort (python)
+- repo: local
+  hooks:
+    - id: pytest
+      name: pytest
+      entry: poetry run pytest
+      language: system
+      pass_filenames: false
+    - id: coverage-badge
+      name: coverage-badge
+      entry: poetry run coverage-badge -o docs/coverage.svg -f
+      language: system
+      pass_filenames: false
