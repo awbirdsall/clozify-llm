@@ -82,7 +82,7 @@ class Completer(GenericCompleter):
         return completion
 
     def extract_text_from_response(self, response: OpenAIObject) -> str:
-        return response["choices"][0]["text"]
+        return response["choices"][0]["text"].strip()
 
     def _get_completion_with_backoff(self, model: str, prompt: str, stop: str, **kwargs):
         """Call openai.Completion.create with defined params set"""
