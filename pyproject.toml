@@ -45,7 +45,7 @@ session-info = "^1.0.0"
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
-addops = "--cov"
+addopts = "--cov"
 
 [tool.coverage.run]
 source = ["clozify_llm"]
