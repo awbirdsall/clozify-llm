@@ -123,6 +123,7 @@ class Joiner:
           Manual corrections, with columns "issue", "cloze_idx", "correct_vocab_idx".
         """
         has_issue = manual_review[manual_review["issue"] == True]  # noqa: E712
+
         to_correct = has_issue.replace("None", None).dropna()
         to_correct["correct_vocab_idx"] = to_correct["correct_vocab_idx"].astype(int)
         correction = pd.merge(
@@ -140,7 +141,7 @@ class Joiner:
         corrected_defn_col = f"{self.defn_col}_corrected"
         # Make replacements
         rows_to_correct = with_corrections[corrected_word_col].notnull()
-        with_corrections.loc[rows_to_correct, "vocab_idx"] = with_corrections.loc[rows_to_correct, "translation"]
+        with_corrections.loc[rows_to_correct, "vocab_idx"] = with_corrections.loc[rows_to_correct, "correct_vocab_idx"]
         with_corrections.loc[rows_to_correct, self.word_col] = with_corrections.loc[rows_to_correct, corrected_word_col]
         with_corrections.loc[rows_to_correct, self.defn_col] = with_corrections.loc[rows_to_correct, corrected_defn_col]
         # Drop rows not in vocab
