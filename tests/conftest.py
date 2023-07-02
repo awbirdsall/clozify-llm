@@ -88,3 +88,41 @@ def finetune_create_response(embedding_vals):
             "updated_at": 1614807352,
         }
     )
+
+
+@pytest.fixture
+def completion_response() -> OpenAIObject:
+    """Mock response from calling Completion API"""
+    return OpenAIObject.construct_from(
+        {
+            "id": "cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7",
+            "object": "text_completion",
+            "created": 1589478378,
+            "model": "text-davinci-003",
+            "choices": [{"text": "\n\nThis is indeed a test", "index": 0, "logprobs": None, "finish_reason": "length"}],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 7, "total_tokens": 12},
+        }
+    )
+
+
+@pytest.fixture
+def chat_completion_response() -> OpenAIObject:
+    """Mock response from calling Chat Completion API"""
+    return OpenAIObject.construct_from(
+        {
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "\n\nHello there, how may I assist you today?",
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 9, "completion_tokens": 12, "total_tokens": 21},
+        }
+    )
