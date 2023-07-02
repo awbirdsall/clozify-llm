@@ -1,5 +1,7 @@
 """predict.py Perform model inference
 """
+from abc import abstractmethod
+
 import openai
 from openai.api_resources.abstract.engine_api_resource import EngineAPIResource
 from openai.openai_object import OpenAIObject
@@ -39,13 +41,13 @@ class GenericCompleter:
         """Wrap resource.create call with retry to handle rate limit errors"""
         return self.openai_resource.create(**kwargs)
 
+    @abstractmethod
     def get_completion_response(self, word: str, defn: str, **kwargs) -> OpenAIObject:
         """Get completion response from word and definition.'''"""
-        raise NotImplementedError("Must be defined by subclass")
 
+    @abstractmethod
     def extract_text_from_response(self, response: OpenAIObject) -> str:
         """Get single text from OpenAI response."""
-        raise NotImplementedError("Must be defined by subclass")
 
     def get_cloze_text(self, word: str, defn: str) -> str:
         """Get single cloze completion text from OpenAIObject"""
@@ -105,7 +107,7 @@ class ChatCompleter(GenericCompleter):
         return response
 
     def extract_text_from_response(self, response: OpenAIObject) -> str:
-        return response["choices"][0]["message"]["content"]
+        return response["choices"][0]["message"]["content"].strip()
 
     def _make_chat_params(
         self,
