@@ -63,7 +63,7 @@ def prep():
 def fetch(url, output, staging):
     """Get vocabulary from a course"""
     words = get_all_vocab_from_course_request(url, staging)
-    words.to_csv(output)
+    words.to_csv(output, index=False)
     print(f"wrote {len(words)} to {output}")
 
 
@@ -78,7 +78,7 @@ def parse(json_file, output):
     with click.open_file(json_file, "r") as f:
         data = json.load(f)
     clozes = extract_cloze(data)
-    clozes.to_csv(output)
+    clozes.to_csv(output, index=False)
     print(f"wrote {len(clozes)} to {output}")
 
 
@@ -98,7 +98,7 @@ def embed(csv_files, output):
         df = pd.read_csv(csv_path)
         df_emb = add_emb(df)
         output_csv = Path(output) / f"{csv_path.stem}-embeds.csv"
-        df_emb.to_csv(output_csv)
+        df_emb.to_csv(output_csv, index=False)
         print(f"wrote {len(df_emb)} to {output_csv}")
 
 
@@ -115,7 +115,7 @@ def match(cloze_csv, vocab_csv, output):
     df_vocab = pd.read_csv(vocab_csv)
     joiner = Joiner(df_cloze, df_vocab)
     joined = joiner.join_emb_sim()
-    joined.to_csv(output)
+    joined.to_csv(output, index=False)
     print(f"wrote candidate join len {len(joined)} to {output}")
 
 
@@ -134,8 +134,8 @@ def fix(candidate_join, manual_review, vocab_csv, output):
     df_vocab = pd.read_csv(vocab_csv)
     joiner = Joiner(df_candidate, df_vocab)
     fixed = joiner.clean_join_from_review(df_candidate, df_manual)
-    fixed.to_csv(output)
-    print(f"wrote corrected join len {len(fixed)} to {output}.")
+    fixed.to_csv(output, index=False)
+    print(f"wrote corrected join len {len(fixed)} to {output}")
 
 
 @cli.command()
