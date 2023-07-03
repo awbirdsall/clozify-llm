@@ -34,7 +34,7 @@ class TestChatCompleter:
     def test_completer_get_completion_response(self, mock_chat_completion, chat_completion_response):
         """Test ChatCompleter.get_completion_response() call with mocked OpenAI ChatCompletion response"""
         mock_chat_completion.create.return_value = chat_completion_response
-        completer = ChatCompleter()
+        completer = ChatCompleter("chat_model_id")
         result = completer.get_completion_response("dummy_word", "dummy_defn")
 
         expected = chat_completion_response
@@ -50,11 +50,11 @@ class TestChatCompleter:
 
     def test_make_chat_params(self):
         """Test ChatCompleter._make_chat_params() on simple example"""
-        completer = ChatCompleter()
-        result = completer._make_chat_params(input_word="word", model="model", temperature=0.9, max_tokens=100)
+        completer = ChatCompleter(model_id="my_chat_model")
+        result = completer._make_chat_params(input_word="word", temperature=0.9, max_tokens=100)
         expected_messages = STARTING_MESSAGE + [{"role": "user", "content": "Input: word"}]
         expected = {
-            "model": "model",
+            "model": "my_chat_model",
             "temperature": 0.9,
             "max_tokens": 100,
             "messages": expected_messages,
@@ -65,8 +65,8 @@ class TestChatCompleter:
 class DummyCompleter(GenericCompleter):
     """Dummy subclass of GenericCompleter for testing"""
 
-    def __init__(self):
-        super().__init__(openai_resource=openai.Completion)
+    def __init__(self, model_id: str):
+        super().__init__(openai_resource=openai.Completion, model_id=model_id)
 
     def get_completion_response(self, word, defn):
         return OpenAIObject.construct_from({"content": f"{word} means {defn}", "usage": {"total_tokens": 1}})
@@ -76,7 +76,7 @@ class DummyCompleter(GenericCompleter):
 
 
 def test_completer_get_cloze_text():
-    completer = DummyCompleter()
+    completer = DummyCompleter(model_id="my_dummy_completer")
     result = completer.get_cloze_text("apple", "banana")
     expected = "apple means banana"
     assert result == expected
