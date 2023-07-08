@@ -31,10 +31,18 @@ class GenericCompleter:
     ```
 
     Alternatively `get_completion_response()` can be used to return the raw `OpenAIObject` response.
+
+    Parameters
+    ----------
+    openai_resource : EngineAPIResource
+      Resource implementing `create()` method that calls openai API
+    model_id : str
+      Identifier of model being used
     """
 
-    def __init__(self, openai_resource: EngineAPIResource):
+    def __init__(self, openai_resource: EngineAPIResource, model_id: str):
         self.openai_resource = openai_resource
+        self.model_id = model_id
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def _create_with_backoff(self, **kwargs):
@@ -61,8 +69,7 @@ class Completer(GenericCompleter):
     """Completer for OpenAI "Completion" model"""
 
     def __init__(self, model_id: str):
-        super().__init__(openai_resource=openai.Completion)
-        self.model_id = model_id
+        super().__init__(openai_resource=openai.Completion, model_id=model_id)
 
     def get_completion_response(self, word: str, defn: str, **kwargs) -> OpenAIObject:
         """Get completion response from word and definition
@@ -94,15 +101,24 @@ class Completer(GenericCompleter):
 class ChatCompleter(GenericCompleter):
     """Completer for OpenAI "ChatCompleter" model"""
 
-    def __init__(self):
-        super().__init__(openai_resource=openai.ChatCompletion)
+    def __init__(self, model_id: str = DEFAULT_CHAT_MODEL):
+        super().__init__(openai_resource=openai.ChatCompletion, model_id=model_id)
 
     def get_completion_response(self, word: str, defn: str, **kwargs) -> OpenAIObject:
         """Get completion response from word
 
         Note: definition ignored at present
+
+        Parameters
+        ----------
+        word : str
+          Word to be clozified.
+        defn : str
+          Definition of word to be clozified (note: currently ignored).
+        **kwargs
+          Additional kwargs passed to self._make_chat_params() (temperature, max_tokens).
         """
-        chat_params = self._make_chat_params(input_word=word)
+        chat_params = self._make_chat_params(input_word=word, **kwargs)
         response = self._create_with_backoff(**chat_params)
         return response
 
@@ -112,11 +128,10 @@ class ChatCompleter(GenericCompleter):
     def _make_chat_params(
         self,
         input_word: str,
-        model: str = DEFAULT_CHAT_MODEL,
         temperature: float = DEFAULT_CHAT_TEMPERATURE,
         max_tokens: int = DEFAULT_CHAT_MAX_TOKENS,
     ) -> dict:
         """Assemble parameters for openai.ChatCompletion request"""
         prompt_message = {"role": "user", "content": f"Input: {input_word}"}
         messages = STARTING_MESSAGE + [prompt_message]
-        return {"model": model, "temperature": temperature, "max_tokens": max_tokens, "messages": messages}
+        return {"model": self.model_id, "temperature": temperature, "max_tokens": max_tokens, "messages": messages}
